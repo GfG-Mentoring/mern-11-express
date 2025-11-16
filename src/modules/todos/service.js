@@ -3,24 +3,24 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const BadRequestException = require('../../exceptions/BadRequestException');
-
+const { Todo } = require('./model');
 const todosFilePath = path.join(__dirname, 'todos.json');
 
-function createTodo({ todo, userId, createdAt = new Date() }) {
-    const data = getTodos();
-    const newTodo = {
-        id: data.length + 1,
+async function createTodo({ todo, userId }) {
+    // const data = getTodos();
+    const newTodo = new Todo({
         todo,
-        userId,
-        createdAt: createdAt.toISOString(),
-    };
-    data.push(newTodo);
-    fs.writeFileSync(todosFilePath, JSON.stringify(data, null, 2));
+        createdBy: userId,
+    });
+
+    await newTodo.save();
+    // data.push(newTodo);
+    // fs.writeFileSync(todosFilePath, JSON.stringify(data, null, 2));
     return newTodo;
 }
 
 
-function getTodos(page = 0, limit = 4) {
+async function getTodos(userId, page = 0, limit = 4) {
     if (typeof page !== 'number') {
         page = Number(page);
     }
@@ -33,28 +33,11 @@ function getTodos(page = 0, limit = 4) {
         throw new BadRequestException('Page and limit must be numbers');
     }
 
-
-    let data = [];
-    // if file exists, read the file and parse the data
-    if (fs.existsSync(todosFilePath)) {
-        // reading the file
-        const fileData = fs.readFileSync(todosFilePath, 'utf-8');
-        // if file data is not empty, parse the data and store in the data variable
-        if (fileData) {
-            const existingData = JSON.parse(fileData);
-            data = [...existingData];
-        }
-    }
-
-    // if limit is -1, return all data
-    if (limit === -1) {
-        return data;
-    }
-
-    // if limit is not -1, return the data based on the page and limit
-    const startIndex = page * limit;
-    const endIndex = startIndex + limit;
-    return data.slice(startIndex, endIndex);
+    const todos = await Todo.find({ createdBy: userId })
+        .skip(page * limit)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+    return todos;
 }
 
 function updateTodo(data) {
