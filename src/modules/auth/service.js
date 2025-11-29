@@ -25,7 +25,13 @@ async function login(email, password) {
     const token = generateToken({ id: user.id });
     // if password is valid, generate a token
     // return the token
-    return token;
+    return {
+        token, user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+        }
+    };
 }
 
 

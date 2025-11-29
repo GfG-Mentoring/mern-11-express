@@ -3,11 +3,12 @@ const express = require('express')
 const { connectDB } = require('./src/utils/db');
 const { todoRouter } = require('./src/modules/todos/routes');
 const { authRouter } = require('./src/modules/auth/routes');
+const cors = require('cors');
 const authMiddleware = require('./src/middlewares/auth');
-
 
 const app = express();
 
+app.use(cors());
 // to parse the body of the request
 app.use(express.json());
 
@@ -19,7 +20,9 @@ app.get('/', (req, res) => {
 });
 
 // localhost:8003/todos  ->  /
-app.use('/todos', authMiddleware, todoRouter);
+app.use('/todos',
+    // authMiddleware,
+    todoRouter);
 
 app.use('/auth', authRouter);
 
