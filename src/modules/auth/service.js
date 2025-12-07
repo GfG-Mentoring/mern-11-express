@@ -1,31 +1,16 @@
-const fs = require('node:fs');
-const path = require('node:path');
 const { hashPassword, verifyPassword } = require('../../utils/hashPasswords');
 const { generateToken } = require('../../utils/jwt');
-const crypto = require('node:crypto');
-
+const { User } = require('./model');
 const BadRequestException = require('../../exceptions/BadRequestException');
 
-
-const usersFile = path.join(__dirname, 'users.json');
-
-function getUsers() {
-    if (!fs.existsSync(usersFile)) {
-        return [];
-    }
-    const users = fs.readFileSync(usersFile, 'utf8');
-    return JSON.parse(users);
-}
-
-
-function login(email, password) {
+async function login(email, password) {
     // validate email and password
     if (!email || !password) {
         throw new BadRequestException('Email and password are required');
     }
-    const users = getUsers();
-    const user = users.find(user => user.email === email);
-
+    const user = await User.findOne({
+        email
+    });
     // check if user exists
     if (!user) {
         throw new BadRequestException('Invalid email. User not found.');
@@ -40,11 +25,17 @@ function login(email, password) {
     const token = generateToken({ id: user.id });
     // if password is valid, generate a token
     // return the token
-    return token;
+    return {
+        token, user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+        }
+    };
 }
 
 
-function signup(name, email, password) {
+async function signup(name, email, password) {
     // 1. validate name, email and password
     //    a.  name should be a string and max only 100 characters.
     //    b.  email should be a valid email address
@@ -55,24 +46,23 @@ function signup(name, email, password) {
     //     email and hashed password
     // 5. return the user  
 
-    const users = getUsers();
-    const user = users.find(user => user.email === email);
+
+    const user = await User.findOne({
+        email
+    });
+
     if (user) {
         throw new BadRequestException('User already exists. Please use a different email address.');
     }
 
     const hashedPassword = hashPassword(password);
 
-    const newUser = {
-        id: crypto.randomUUID(),
-        name,
+    const newUser = new User({
+        fullName: name,
         email,
         password: hashedPassword,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
-    users.push(newUser);
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    });
+    await newUser.save();
     return;
 }
 

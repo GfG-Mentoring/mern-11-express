@@ -6,7 +6,7 @@ function generateToken(payload) {
     return jwt.sign(payload, secret, {
         // audience: 'app.todo-app.com',
         subject: 'auth',
-        expiresIn: '1m',
+        expiresIn: '1d',
         // issuer: 'api.todo-app.com',
     }
     );

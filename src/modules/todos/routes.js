@@ -5,10 +5,14 @@ const { createTodo, getTodos, updateTodo } = require('./service');
 const todoRouter = Router();
 
 
-todoRouter.get('/', (req, res) => {
-    const { page = 0, limit = 2 } = req.query;
+todoRouter.get('/', async (req, res) => {
+    const { page = 0, limit = 5 } = req.query;
+
+    const userId = req.user._id;
+    // const userId = '66a86080f547642bc4718123';
+
     try {
-        const todos = getTodos(page, limit);
+        const todos = await getTodos(userId, page, limit);
         if (todos.length === 0) {
             return res.status(404).send({
                 message: 'No todos found',
@@ -19,6 +23,7 @@ todoRouter.get('/', (req, res) => {
             data: todos,
         });
     } catch (error) {
+        console.error(error);
         if (error instanceof BadRequestException) {
             return res.status(error.statusCode).send({
                 message: error.message,
@@ -31,18 +36,20 @@ todoRouter.get('/', (req, res) => {
 
 });
 
-todoRouter.post('/', (req, res) => {
+todoRouter.post('/', async (req, res) => {
 
-    const { todo, userId, createdAt } = req.body;
+    const { todo } = req.body;
+
+    const userId = req.user._id;
+    // const userId = '66a86080f547642bc4718123';
 
     if (!todo || !userId) {
         return res.status(400).send({
             message: 'Todo and userId are required',
         })
     }
-    const parsedCreatedAt = createdAt ? new Date(createdAt) : new Date();
 
-    const newTodo = createTodo({ todo, userId, createdAt: parsedCreatedAt });
+    const newTodo = await createTodo({ todo, userId });
 
     return res.status(201).send({
         message: 'Todo created successfully',
