@@ -8,8 +8,8 @@ const todoRouter = Router();
 todoRouter.get('/', async (req, res) => {
     const { page = 0, limit = 5 } = req.query;
 
-    // const userId = req.user._id;
-    const userId = '66a86080f547642bc4718123';
+    const userId = req.user._id;
+    // const userId = '66a86080f547642bc4718123';
 
     try {
         const todos = await getTodos(userId, page, limit);
@@ -40,8 +40,8 @@ todoRouter.post('/', async (req, res) => {
 
     const { todo } = req.body;
 
-    // const userId = req.user._id;
-    const userId = '66a86080f547642bc4718123';
+    const userId = req.user._id;
+    // const userId = '66a86080f547642bc4718123';
 
     if (!todo || !userId) {
         return res.status(400).send({
